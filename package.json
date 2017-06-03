@@ -1,0 +1,23 @@
+{
+  "name": "install-github-dep",
+  "version": "0.0.0-development",
+  "description": "install github repos in as external dependancies",
+  "license": "MIT",
+  "author": "davidwells <david@inboundnow.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidwells/install-github-dep.git"
+  },
+  "homepage": "https://github.com/davidwells/install-github-dep#readme",
+  "bugs": "https://github.com/davidwells/install-github-dep/issues",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "nps test"
+  },
+  "dependencies": {
+    "chalk": "1.1.3",
+    "is-github-url": "1.2.2",
+    "parse-github-url": "1.0.0",
+    "sha1-regex": "1.0.0"
+  }
+}
