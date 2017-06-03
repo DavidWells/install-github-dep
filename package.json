@@ -1,6 +1,6 @@
 {
   "name": "install-github-dep",
-  "version": "0.0.0-development",
+  "version": "0.0.1",
   "description": "install github repos in as external dependancies",
   "license": "MIT",
   "author": "davidwells <david@inboundnow.com>",
@@ -12,7 +12,14 @@
   "bugs": "https://github.com/davidwells/install-github-dep/issues",
   "main": "src/index.js",
   "scripts": {
-    "test": "nps test"
+    "docs": "node examples/generate-readme.js",
+    "test": "ava --verbose",
+    "test:watch": "ava --verbose --watch",
+    "lint": "eslint .",
+    "publish": "git push origin && git push origin --tags",
+    "release:patch": "npm version patch && npm publish",
+    "release:minor": "npm version minor && npm publish",
+    "release:major": "npm version major && npm publish"
   },
   "dependencies": {
     "chalk": "1.1.3",
