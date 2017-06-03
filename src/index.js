@@ -12,14 +12,13 @@ const sha1 = require('sha1-regex')
 const checkIfGithubSSHExists = require('./githubConnectionType')
 const insideNodeModulesFolder = cwd.indexOf('node_modules') > -1
 
-
+// TODO make api nicer?
 function installGithubDeps(repos) {
+  // make api accept arrays?
   if (typeof repos === 'string') {
     doIt(repos, pathName)
   }
 }
-
-function noOp() {}
 
 function installGithubDependancy(repoUrl, pathName, cb) {
   let callback = cb || noOp
@@ -76,7 +75,10 @@ function installGithubDependancy(repoUrl, pathName, cb) {
   })
 }
 
+function noOp() {}
+
 module.exports = installGithubDependancy
+
 
 /* usage
 installGithubDependancy('https://github.com/davidwells/markdown-magic', () => {
