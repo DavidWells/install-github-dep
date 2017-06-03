@@ -78,6 +78,8 @@ function installGithubDependancy(repoUrl, pathName, cb) {
 
 module.exports = installGithubDependancy
 
+/* usage
 installGithubDependancy('https://github.com/davidwells/markdown-magic', () => {
-  console.log('ho')
+  console.log('hi')
 })
+/**/
