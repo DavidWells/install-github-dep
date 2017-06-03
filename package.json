@@ -1,6 +1,6 @@
 {
   "name": "install-github-dep",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "install github repos in as external dependancies",
   "license": "MIT",
   "author": "davidwells <david@inboundnow.com>",
