@@ -11,6 +11,6 @@ const installGithubDependancy = require('install-github-dep')
 
 /* usage */
 installGithubDependancy('https://github.com/davidwells/markdown-magic', () => {
-  console.log('hi')
+  console.log('working git repo installed to ./markdown-magic')
 })
 ```
