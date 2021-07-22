@@ -1,16 +1,18 @@
 const fs = require('fs')
-const cwd = process.cwd()
-const path = require('path');
+const path = require('path')
 const chalk = require('chalk')
+const sha1 = require('sha1-regex')
+const isGithubUrl = require('is-github-url')
+const parseGithubUrl = require('parse-github-url')
+
 const fileExists = require('./fileExists')
 const cloneRepo = require('./cloneRepo')
 const updateRepo = require('./updateRepo')
 const checkoutCommitHash = require('./checkoutCommit')
-const parseGithubUrl = require('parse-github-url');
-const isGithubUrl = require('is-github-url');
-const sha1 = require('sha1-regex')
 const checkIfGithubSSHExists = require('./githubConnectionType')
+
 const insideNodeModulesFolder = cwd.indexOf('node_modules') > -1
+const cwd = process.cwd()
 
 // TODO make api nicer?
 function installGithubDeps(repos) {
@@ -20,59 +22,65 @@ function installGithubDeps(repos) {
   }
 }
 
-function installGithubDependancy(repoUrl, pathName, cb) {
+async function installGithubDependancy(repoUrl, pathName, cb) {
   let callback = cb || noOp
   if (typeof pathName === 'function') {
     callback = pathName
     pathName = null
   }
-  checkIfGithubSSHExists((isSSH) => {
-    const prefix = (isSSH) ? 'git@github.com:' : 'https://github.com/'
-    // remove trailing slash
-    const sanitizedURL = repoUrl.replace(/\/$/, '')
-    if(!isGithubUrl(sanitizedURL.split("#")[0])) {
-      console.log(chalk.red(`${repoUrl} is invalid github URL`))
-      return false
-    }
-    const githubObject = parseGithubUrl(sanitizedURL)
-    const filePath = pathName || path.join(cwd, githubObject.name)
+  const isSSH = await checkIfGithubSSHExists()
+  const prefix = (isSSH) ? 'git@github.com:' : 'https://github.com/'
+  const fallback = (!isSSH) ? 'https://github.com/' : 'git@github.com:'
+  // remove trailing slash
+  const sanitizedURL = repoUrl.replace(/\/$/, '')
+  if (!isGithubUrl(sanitizedURL.split("#")[0])) {
+    throw new Error(`[Install Github Dep Error]: ${repoUrl} is invalid github URL`)
+  }
+  const githubObject = parseGithubUrl(sanitizedURL)
+  const filePath = pathName || path.join(cwd, githubObject.name)
 
-    // remove trailing slash
-    const repoPath = githubObject.path.replace(/\/$/, '')
-    let branch = githubObject.branch || 'master'
-    const isCommitHash = sha1.test(branch)
-    let commitHash
+  // remove trailing slash
+  const repoPath = githubObject.path.replace(/\/$/, '')
+  let branch = githubObject.branch || 'master'
+  const isCommitHash = sha1.test(branch)
+  let commitHash
+  if (isCommitHash) {
+    branch = 'master'
+  }
+
+  const cloneURL = `${prefix}${repoPath}.git`
+  const fallbackURL = `${fallback}${repoPath}.git`
+
+  if (!fileExists(filePath)) {
+    // clone it
+    await cloneRepo({ 
+      repoPath: cloneURL,
+      branch, 
+      outputDir: filePath,
+      fallbackPath: fallbackURL,
+      cwd: cwd,
+    }).then(() => {
+      if (!isCommitHash) {
+        return callback()
+      }
+      // if branch was actually a commit hash, checkout code to correct hash
+      checkoutCommitHash(filePath, githubObject.branch, () => {
+        return callback()
+      })
+    })
+  }
+  if (fileExists(path.join(filePath, '.git'))) {
+    console.log('git repo already exists')
     if (isCommitHash) {
-      branch = 'master'
-    }
-
-    const cloneURL = `${prefix}${repoPath}.git`
-
-    if (!fileExists(filePath)) {
-      // clone it
-      cloneRepo(cloneURL, branch, filePath, () => {
-        if (!isCommitHash) {
-          return callback()
-        }
-        // if branch was actually a commit hash, checkout code to correct hash
-        checkoutCommitHash(filePath, githubObject.branch, () => {
-          return callback()
-        })
+      await updateRepo(filePath, githubObject.branch).then(() => {
+        return callback()
+      })
+    } else {
+      await updateRepo(filePath, branch).then(() => {
+        return callback()
       })
     }
-    if (fileExists(path.join(filePath, '.git'))) {
-      console.log('git repo already exists')
-      if (isCommitHash) {
-        updateRepo(filePath, githubObject.branch, () => {
-          return callback()
-        })
-      } else {
-        updateRepo(filePath, branch, () => {
-          return callback()
-        })
-      }
-    }
-  })
+  }
 }
 
 function noOp() {}
