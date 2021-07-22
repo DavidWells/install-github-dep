@@ -7,14 +7,24 @@ module.exports = async function cloneRepo({
   fallbackPath,
   cwd,
 }) {
-  console.log(`Cloning repo down ${branch} branch of ${repoPath} to ${outputDir}`)
   let resp
   try {
     resp = await clone(repoPath, branch, outputDir, cwd)
   } catch(e) {
     // Fallback to alternative cloning method
-    resp = await clone(fallbackPath, branch, outputDir, cwd)
+    try {
+      resp = await clone(fallbackPath, branch, outputDir, cwd)
+    } catch(e) {
+      console.log(`❌  Github dep install failed for "${repoPath}" & "${fallbackPath}"`)
+    }
   }
+
+  if (resp !== 0) {
+    throw new Error(`❌ Failed to clone repo. 
+"${repoPath}" & "${fallbackPath}" are invalid remote repos or you do not have access to them.
+`)
+  }
+
   return resp
 }
 
@@ -35,8 +45,8 @@ function clone(repo, branch, path, cwd) {
       // console.log(data)
     })
     child.on('close', (code) => {
-      if (code === 0) {
-        console.log(`${repo} successfully cloned`)
+      if (code == 0) {
+        console.log(`✅  Github dep installed "${repo}" -> "${finalPath}"`)
       }
       resolve(code)
     })

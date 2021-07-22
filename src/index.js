@@ -47,7 +47,7 @@ async function installGithubDep(repoUrl, pathName, cb) {
     branch = 'master'
   }
 
-  const cloneURL = `${prefix}ccc${repoPath}.git`
+  const cloneURL = `${prefix}${repoPath}.git`
   const fallbackURL = `${fallback}${repoPath}.git`
   let isFreshInstall = false
   let data = {}
@@ -75,7 +75,7 @@ async function installGithubDep(repoUrl, pathName, cb) {
   }
   const isGitRepo = await fileExists(path.join(filePath, '.git'))
   if (!isFreshInstall && isGitRepo) {
-    console.log('git repo already exists')
+    // console.log(`git repo already exists ${filePath}`)
     const branchInfo = (isCommitHash) ? githubObject.branch : branch
     await updateRepo(filePath, branchInfo)
     data = {

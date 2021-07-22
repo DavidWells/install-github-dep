@@ -12,12 +12,17 @@ module.exports = function updateRepo(filePath, branch, callback) {
       // console.log(stdout)
     })
     child.stdout.on('data', (data) => {
-      console.log(`${name} repo updated`)
+      // console.log(`${name} repo updated`)
     })
     child.stderr.on('data', (data) => {
       // console.log(data)
     })
     child.on('close', (code) => {
+      if (code == 0) {
+        console.log(`✅  Github dep "${name}" updated in ${filePath}`)
+      } else {
+        console.log(`❌  Github dep "${name}" repo NOT updated. You may have uncommited local changes`)
+      }
       resolve()
     })
   })
