@@ -1,18 +1,17 @@
 const fs = require('fs')
 const path = require('path')
-const chalk = require('chalk')
 const sha1 = require('sha1-regex')
 const isGithubUrl = require('is-github-url')
 const parseGithubUrl = require('parse-github-url')
 
-const fileExists = require('./fileExists')
-const cloneRepo = require('./cloneRepo')
-const updateRepo = require('./updateRepo')
-const checkoutCommitHash = require('./checkoutCommit')
-const checkIfGithubSSHExists = require('./githubConnectionType')
+const cloneRepo = require('./utils/clone')
+const updateRepo = require('./utils/pull')
+const checkoutCommitHash = require('./utils/checkout')
+const checkIfGithubSSHExists = require('./utils/hasSSH')
+const fileExists = (s) => new Promise(r => fs.access(s, fs.F_OK, e => r(!e)))
 
-const insideNodeModulesFolder = cwd.indexOf('node_modules') > -1
 const cwd = process.cwd()
+const insideNodeModulesFolder = cwd.indexOf('node_modules') > -1
 
 // TODO make api nicer?
 function installGithubDeps(repos) {
@@ -22,7 +21,7 @@ function installGithubDeps(repos) {
   }
 }
 
-async function installGithubDependancy(repoUrl, pathName, cb) {
+async function installGithubDep(repoUrl, pathName, cb) {
   let callback = cb || noOp
   if (typeof pathName === 'function') {
     callback = pathName
@@ -48,10 +47,14 @@ async function installGithubDependancy(repoUrl, pathName, cb) {
     branch = 'master'
   }
 
-  const cloneURL = `${prefix}${repoPath}.git`
+  const cloneURL = `${prefix}ccc${repoPath}.git`
   const fallbackURL = `${fallback}${repoPath}.git`
+  let isFreshInstall = false
+  let data = {}
 
-  if (!fileExists(filePath)) {
+  const repoExists = await fileExists(filePath)
+  if (!repoExists) {
+    isFreshInstall = true
     // clone it
     await cloneRepo({ 
       repoPath: cloneURL,
@@ -59,37 +62,38 @@ async function installGithubDependancy(repoUrl, pathName, cb) {
       outputDir: filePath,
       fallbackPath: fallbackURL,
       cwd: cwd,
-    }).then(() => {
-      if (!isCommitHash) {
-        return callback()
-      }
-      // if branch was actually a commit hash, checkout code to correct hash
-      checkoutCommitHash(filePath, githubObject.branch, () => {
-        return callback()
-      })
     })
-  }
-  if (fileExists(path.join(filePath, '.git'))) {
-    console.log('git repo already exists')
+
+    data = {
+      message: 'repo cloned'
+    }
+
     if (isCommitHash) {
-      await updateRepo(filePath, githubObject.branch).then(() => {
-        return callback()
-      })
-    } else {
-      await updateRepo(filePath, branch).then(() => {
-        return callback()
-      })
+      // if branch was actually a commit hash, checkout code to correct hash
+      await checkoutCommitHash(filePath, githubObject.branch)
     }
   }
+  const isGitRepo = await fileExists(path.join(filePath, '.git'))
+  if (!isFreshInstall && isGitRepo) {
+    console.log('git repo already exists')
+    const branchInfo = (isCommitHash) ? githubObject.branch : branch
+    await updateRepo(filePath, branchInfo)
+    data = {
+      message: 'repo updated'
+    }
+  }
+
+  if (callback) callback(data)
+  return data
 }
 
 function noOp() {}
 
-module.exports = installGithubDependancy
+module.exports = installGithubDep
 
 
 /* usage
-installGithubDependancy('https://github.com/davidwells/markdown-magic', () => {
+installGithubDep('https://github.com/davidwells/markdown-magic', () => {
   console.log('hi')
 })
 /**/

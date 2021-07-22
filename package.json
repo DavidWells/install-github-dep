@@ -1,9 +1,9 @@
 {
   "name": "install-github-dep",
   "version": "0.0.2",
-  "description": "install github repos in as external dependancies",
+  "description": "Install github repositories in as external dependencies",
   "license": "MIT",
-  "author": "davidwells <david@inboundnow.com>",
+  "author": "davidwells <hello@davidwells.io>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/davidwells/install-github-dep.git"
@@ -22,7 +22,6 @@
     "release:major": "npm version major && npm publish"
   },
   "dependencies": {
-    "chalk": "1.1.3",
     "is-github-url": "1.2.2",
     "parse-github-url": "1.0.0",
     "sha1-regex": "1.0.0"

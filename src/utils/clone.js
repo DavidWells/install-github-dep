@@ -12,6 +12,7 @@ module.exports = async function cloneRepo({
   try {
     resp = await clone(repoPath, branch, outputDir, cwd)
   } catch(e) {
+    // Fallback to alternative cloning method
     resp = await clone(fallbackPath, branch, outputDir, cwd)
   }
   return resp
@@ -23,7 +24,7 @@ function clone(repo, branch, path, cwd) {
     const command = `git clone -b ${branch} ${repo}${finalPath}`
     const child = exec(command, { cwd }, (error, stdout, stderr) => {
       if (error) {
-        console.warn(error)
+        // console.warn(error)
         return reject(error)
       }
     })
@@ -31,11 +32,13 @@ function clone(repo, branch, path, cwd) {
       console.log(data)
     })
     child.stderr.on('data', (data) => {
-      console.log(data)
+      // console.log(data)
     })
     child.on('close', (code) => {
-      console.log(`${repo} successfully cloned`)
-      resolve()
+      if (code === 0) {
+        console.log(`${repo} successfully cloned`)
+      }
+      resolve(code)
     })
   })
 }
